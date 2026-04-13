@@ -1,0 +1,31 @@
+meta:
+  nombre: "Capacidades de Política Pública — Rionegro"
+  investigador: "Maroly"
+  estado: activo
+  inicio: 2024-08-01
+  tags: [política-pública, capacidades, gobierno-local]
+
+framework:
+  nombre: "Policy Capacities Framework"
+  referencia: "Wu, Ramesh & Howlett (2015/2018)"
+  dimensiones:
+    competencias: [Analítica, Operativa, Política]
+    niveles: [Individual, Organizacional, Sistémico]
+
+contexto:
+  caso: "Municipio de Rionegro, Antioquia, Colombia"
+  campo_comparabilidad: true
+  escala_comparabilidad: [0, 3]
+
+clasificacion:
+  categorias: [FUNDAMENTAL, IMPORTANTE, COMPLEMENTARIA, REFERENCIA]
+
+veredictos:
+  - id: P1
+    pregunta: "Incluir en revisión sistemática"
+  - id: P2
+    pregunta: "Aporta al marco teórico"
+  - id: P3
+    pregunta: "Aporta a la metodología"
+  - id: P4
+    pregunta: "Provee indicadores operacionalizables"
