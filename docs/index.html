@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Capacidades de Política Pública · Rionegro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0f14;
+  --surface: #151920;
+  --surface2: #1c2230;
+  --border: #2a3040;
+  --text: #e2e6ed;
+  --text-dim: #8891a0;
+  --accent: #4fd1c5;
+  --accent2: #f6ad55;
+  --fund: #fc8181;
+  --imp: #f6ad55;
+  --comp: #63b3ed;
+  --ref: #a0aec0;
+  --green: #68d391;
+  --red: #fc8181;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  padding: 2.5rem 2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #0c0f14 0%, #141a24 100%);
+}
+.header h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.75rem;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+.header .sub {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+.header .meta-row {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+.meta-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+.meta-pill span { color: var(--text-dim); }
+.meta-pill strong { color: var(--accent); }
+
+/* Layout */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.5rem;
+}
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+}
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+.card-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
+/* Stat cards */
+.stat-card {
+  text-align: center;
+  padding: 1rem;
+}
+.stat-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 0.35rem;
+}
+
+/* Heatmap */
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr 1fr;
+  gap: 3px;
+}
+.heatmap-header {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  padding: 0.5rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.heatmap-row-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  writing-mode: horizontal-tb;
+}
+.heatmap-cell {
+  border-radius: 6px;
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+.heatmap-cell:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  z-index: 2;
+}
+.cell-score {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.cell-avg {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+.cell-label {
+  font-size: 0.65rem;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+/* Classification bars */
+.class-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.class-bar .bar-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  width: 110px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.class-bar .bar-track {
+  flex: 1;
+  height: 24px;
+  background: var(--surface2);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.class-bar .bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+}
+.class-bar .bar-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--bg);
+}
+
+/* Veredictos */
+.veredicto-grid {
+  display: grid;
+  grid-template-columns: auto repeat(4, 1fr);
+  gap: 2px;
+  font-size: 0.7rem;
+}
+.veredicto-grid .vg-header {
+  font-weight: 700;
+  color: var(--text-dim);
+  padding: 0.4rem 0.5rem;
+  text-align: center;
+  background: var(--surface2);
+  border-radius: 3px;
+}
+.veredicto-grid .vg-cell {
+  padding: 0.4rem 0.5rem;
+  text-align: center;
+  background: var(--surface2);
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.veredicto-grid .vg-label {
+  padding: 0.4rem 0.5rem;
+  font-weight: 500;
+  background: var(--surface2);
+  border-radius: 3px;
+}
+
+/* Table */
+.table-controls {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 0.35rem 0.75rem;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+.filter-btn.active {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+.search-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.35rem 0.75rem;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  width: 220px;
+}
+.search-input:focus { outline: none; border-color: var(--accent); }
+.search-input::placeholder { color: var(--text-dim); }
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 2px;
+  font-size: 0.75rem;
+}
+.data-table thead th {
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.data-table thead th:hover { color: var(--accent); }
+.data-table tbody tr {
+  background: var(--surface);
+  transition: background 0.1s;
+}
+.data-table tbody tr:hover { background: var(--surface2); }
+.data-table tbody td {
+  padding: 0.5rem 0.6rem;
+  border-top: 1px solid var(--border);
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.data-table tbody td:first-child { border-radius: 5px 0 0 5px; }
+.data-table tbody td:last-child { border-radius: 0 5px 5px 0; }
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+.badge-fund { background: rgba(252,129,129,0.15); color: var(--fund); }
+.badge-imp { background: rgba(246,173,85,0.15); color: var(--imp); }
+.badge-comp { background: rgba(99,179,237,0.15); color: var(--comp); }
+.badge-ref { background: rgba(160,174,192,0.15); color: var(--ref); }
+
+.cell-mini {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  text-align: center;
+  line-height: 18px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  margin-right: 1px;
+}
+
+/* Radar container */
+.radar-wrap { max-width: 320px; margin: 0 auto; }
+
+/* Section titles */
+.section-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.1rem;
+  color: var(--text);
+  margin: 2rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Tooltip */
+.tooltip {
+  display: none;
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  max-width: 280px;
+  z-index: 100;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+.tooltip.visible { display: block; }
+.tooltip h4 { color: var(--accent); font-size: 0.8rem; margin-bottom: 0.3rem; }
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  border-top: 1px solid var(--border);
+  margin-top: 2rem;
+}
+
+.span-2 { grid-column: span 2; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Capacidades de Política Pública — Rionegro</h1>
+  <div class="sub">Policy Capacities Framework · Wu, Ramesh & Howlett (2015/2018) · Dashboard de Revisión de Literatura</div>
+  <div class="meta-row" id="metaRow"></div>
+</div>
+
+<div class="container">
+
+  <!-- Stats row -->
+  <div class="grid-4" id="statsRow" style="margin-top:1rem"></div>
+
+  <!-- Main grid: Heatmap + Radar + Classification -->
+  <div class="section-title">Matriz de Capacidades — Cobertura por Celda</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Heatmap · Artículos con puntaje ≥ 1 por celda</div>
+      <div id="heatmap" class="heatmap-grid"></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-title">Radar · Puntaje promedio por competencia × nivel</div>
+        <div class="radar-wrap"><canvas id="radarChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Clasificación de artículos</div>
+        <div id="classificationBars"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Veredictos P1-P4 -->
+  <div class="section-title">Veredictos — Preguntas Empíricas P1–P4</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Distribución de veredictos</div>
+      <div id="verdictGrid"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Comparabilidad con Rionegro</div>
+      <canvas id="compChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="section-title">Artículos · <span id="tableCount" style="color:var(--accent)"></span></div>
+  <div class="card">
+    <div class="table-controls">
+      <input type="text" class="search-input" id="searchInput" placeholder="Buscar artículo...">
+      <button class="filter-btn active" data-filter="TODOS">Todos</button>
+      <button class="filter-btn" data-filter="FUNDAMENTAL">Fundamental</button>
+      <button class="filter-btn" data-filter="IMPORTANTE">Importante</button>
+      <button class="filter-btn" data-filter="COMPLEMENTARIA">Complementaria</button>
+      <button class="filter-btn" data-filter="REFERENCIA">Referencia</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th data-sort="titulo">Título ↕</th>
+            <th data-sort="pais">País ↕</th>
+            <th data-sort="clasificacion">Clasif. ↕</th>
+            <th data-sort="suma_puntajes">Σ Punt. ↕</th>
+            <th>Matriz</th>
+            <th data-sort="comparabilidad_rionegro">Comp. ↕</th>
+            <th data-sort="n_indicadores"># Ind. ↕</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<div class="footer">
+  Dashboard generado automáticamente · Proyecto Capacidades Rionegro · PCF Wu et al.<br>
+  Última actualización: <span id="lastUpdate"></span>
+</div>
+
+<script>
+const DATA = [{"archivo": "2024 - Ertugal - Populism and policy capacity  Evidence from an opposition municipality in Istanbul.pdf.pdf", "referencia_apa": "Ertugal, E., & Sevinç, İ. (2024). Populism and policy capacity: Evidence from an opposition municipality in Istanbul. *Public Administration and Development*. https://doi.org/10.1002/pad.2078", "año": 2024.0, "pais": "Turquía", "nivel_gobierno": "Municipal (distrito metropolitano)", "tipo_regimen_burocratico": "Híbrido con elementos patrimoniales intensificados", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 1, "OI": 2, "OO": 2, "OS": 3, "PI": 3, "PO": 2, "PS": 3, "suma_puntajes": 19, "celdas_principales": "OS, PI, PS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "No aplica", "P2_veredicto": "No aplica", "P3_veredicto": "Extiende", "P4_veredicto": "Soporta", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "2024 - Ertugal - Populism and policy capacity  Evidence from an opposition munic"}, {"archivo": "2025 - Capano - Do Policy Capacities Matter for Federal Policy Design  Evidence From the policies of Brazil.pdf.pdf", "referencia_apa": "Capano, G., & Elias de Oliveira, V. (2025). Do Policy Capacities Matter for Federal Policy Design? Evidence From the Implementation of Three Social Policies in Brazil. Public Administration and Develo", "año": 2025.0, "pais": "", "nivel_gobierno": "", "tipo_regimen_burocratico": "", "comparabilidad_rionegro": "", "AI": 0, "AO": 0, "AS": 0, "OI": 0, "OO": 0, "OS": 0, "PI": 0, "PO": 0, "PS": 0, "suma_puntajes": 0, "celdas_principales": "", "n_indicadores": 0, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "", "P2_veredicto": "", "P3_veredicto": "", "P4_veredicto": "", "clasificacion": "", "fecha_ficha": "2026-04-13", "titulo": "2025 - Capano - Do Policy Capacities Matter for Federal Policy Design  Evidence "}, {"archivo": "9.WSI-HS-009101_LosoJudijanto1dkk-Template.pdf.pdf", "referencia_apa": "Judijanto, L., Sono, M. G., & Bunyamin, I. A. (2024). Analysis of regulatory quality, interagency coordination, and institutional capacity on the effectiveness of public services in Jakarta. West Scie", "año": 2024.0, "pais": "Indonesia", "nivel_gobierno": "Municipal (gobierno provincial de megaciudad)", "tipo_regimen_burocratico": "Híbrido (reformas weberianas en transición)", "comparabilidad_rionegro": "Baja", "AI": 1, "AO": 2, "AS": 0, "OI": 1, "OO": 3, "OS": 2, "PI": 0, "PO": 1, "PS": 2, "suma_puntajes": 12, "celdas_principales": "OO, AO, PS", "n_indicadores": 4, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "No aplica", "P3_veredicto": "Soporta", "P4_veredicto": "No aplica", "clasificacion": "COMPLEMENTARIA", "fecha_ficha": "2026-04-13", "titulo": "9.WSI-HS-009101_LosoJudijanto1dkk-Template"}, {"archivo": "A PROPOSITIONAL ANALYSIS OF LOCAL GOVERNMENT CAPACITY IN BRAZIL - Revista do Serviço Público.pdf", "referencia_apa": "Fontanelli, F., Fernandes, A. S. A., Grin, E., Teixeira, M. A. C., & Nascimento, A. B. F. M. (2025). A propositional analysis of local government capacity in Brazil. Revista do Serviço Público, 76(1),", "año": 2025.0, "pais": "Brasil", "nivel_gobierno": "Municipal", "tipo_regimen_burocratico": "Híbrido (sistema federal con variaciones locales)", "comparabilidad_rionegro": "Alta", "AI": 1, "AO": 3, "AS": 2, "OI": 0, "OO": 3, "OS": 2, "PI": 1, "PO": 3, "PS": 2, "suma_puntajes": 17, "celdas_principales": "AO, OO, PO", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "Extiende", "P2_veredicto": "No aplica", "P3_veredicto": "Soporta", "P4_veredicto": "No aplica", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "A PROPOSITIONAL ANALYSIS OF LOCAL GOVERNMENT CAPACITY IN BRAZIL - Revista do Ser"}, {"archivo": "ANÁLISE DAS CAPACIDADES ESTATAIS MUNICIPAIS NA LITERATURA ACADÊMICA_ CONSTRUÇÃO E VISUALIZAÇÃO DE MAPAS BIBLIOMÉTRICOS COM VOSVIEWER E CITNETEXPLORER.pdf", "referencia_apa": "Silva, L. B., Silva, L. L., & Almeida, L. A. (2023). Análise das capacidades estatais municipais na literatura acadêmica: construção e visualização de mapas bibliométricos com VOSviewer e CitNetExplor", "año": 2023.0, "pais": "Brasil", "nivel_gobierno": "Municipal (análisis transversal)", "tipo_regimen_burocratico": "Híbrido post-redemocratización", "comparabilidad_rionegro": "Alta", "AI": 1, "AO": 2, "AS": 3, "OI": 1, "OO": 2, "OS": 2, "PI": 0, "PO": 1, "PS": 2, "suma_puntajes": 14, "celdas_principales": "AS, AO, OS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "No aplica", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "COMPLEMENTARIA", "fecha_ficha": "2026-04-13", "titulo": "ANÁLISE DAS CAPACIDADES ESTATAIS MUNICIPAIS NA LITERATURA ACADÊMICA_ CONSTRUÇÃO "}, {"archivo": "Aurel Croissant, Olli Hellmann - Democracy, State Capacity and the Governance of COVID-19 in Asia-Oceania (2023, Routledge).pdf.pdf", "referencia_apa": "Croissant, A., & Hellmann, O. (Eds.). (2023). Democracy, state capacity and the governance of COVID-19 in Asia-Oceania. Routledge.", "año": 2023.0, "pais": "Múltiples países Asia-Oceanía", "nivel_gobierno": "nacional/subnacional", "tipo_regimen_burocratico": "mixto (weberiano/híbrido)", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 2, "OI": 1, "OO": 3, "OS": 3, "PI": 2, "PO": 2, "PS": 3, "suma_puntajes": 19, "celdas_principales": "OO, OS, PS", "n_indicadores": 5, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Aurel Croissant, Olli Hellmann - Democracy, State Capacity and the Governance of"}, {"archivo": "Bali, Azad Singh (author)_Ramesh, M. (author) - Governing healthcare in India_ a policy capacity perspective (2021, SAGE Publications).pdf.pdf", "referencia_apa": "Bali, A. S., & Ramesh, M. (2021). Governing healthcare in India: a policy capacity perspective. International Review of Administrative Sciences, 87(3), 1-17. https://doi.org/10.1177/00208523211001499", "año": 2021.0, "pais": "India", "nivel_gobierno": "Nacional con implementación subnacional", "tipo_regimen_burocratico": "Híbrido con fragmentación sectorial", "comparabilidad_rionegro": "Media", "AI": 2, "AO": 3, "AS": 2, "OI": 2, "OO": 3, "OS": 2, "PI": 2, "PO": 1, "PS": 1, "suma_puntajes": 18, "celdas_principales": "AO, OO, AI", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Desafía", "P3_veredicto": "Soporta", "P4_veredicto": "Soporta", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Bali, Azad Singh (author)_Ramesh, M. (author) - Governing healthcare in India_ a"}, {"archivo": "Barbara Geddes - Politician’s Dilemma_ Building State Capacity in Latin America (1996, University of California Press).pdf.pdf", "referencia_apa": "Geddes, B. (1996). Politician's Dilemma: Building State Capacity in Latin America. University of California Press.", "año": 1996.0, "pais": "Brasil (caso principal), Colombia, Venezuela, Chil", "nivel_gobierno": "Nacional con análisis de dinámicas subnacionales", "tipo_regimen_burocratico": "Híbrido con elementos neopatrimoniales", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 1, "OI": 2, "OO": 3, "OS": 2, "PI": 3, "PO": 2, "PS": 2, "suma_puntajes": 18, "celdas_principales": "OO, PI, OI", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "No aplica", "clasificacion": "FUNDAMENTAL", "fecha_ficha": "2026-04-13", "titulo": "Barbara Geddes - Politician’s Dilemma_ Building State Capacity in Latin America "}, {"archivo": "Brenton et al 2022 Policy capacity  evolving theory and missing links.pdf.pdf", "referencia_apa": "Brenton, S., Baekkeskov, E., & Hannah, A. (2023). Policy capacity: evolving theory and missing links. Policy Studies, 44(3), 297-315. https://doi.org/10.1080/01442872.2022.2043266", "año": 2023.0, "pais": "Múltiples (meta-análisis)", "nivel_gobierno": "Transversal (todos los niveles)", "tipo_regimen_burocratico": "Híbrido (analiza múltiples contextos)", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 1, "OI": 2, "OO": 3, "OS": 2, "PI": 2, "PO": 1, "PS": 3, "suma_puntajes": 17, "celdas_principales": "OO, PS, AO", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "No aplica", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Brenton et al 2022 Policy capacity  evolving theory and missing links"}, {"archivo": "Brinkerhoff, Derick Developing capacity in fragile states.pdf.pdf", "referencia_apa": "Brinkerhoff, D. W. (2010). Developing capacity in fragile states. Public Administration and Development, 30(1), 66-78. https://doi.org/10.1002/pad.545", "año": 2010.0, "pais": "Estados frágiles (ejemplos: Timor Oriental, Liberi", "nivel_gobierno": "Nacional con implicaciones subnacionales", "tipo_regimen_burocratico": "Neopatrimonial/híbrido con alta dependencia extern", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 1, "OI": 2, "OO": 3, "OS": 3, "PI": 2, "PO": 2, "PS": 3, "suma_puntajes": 19, "celdas_principales": "OO, OS, PS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "Soporta", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Brinkerhoff, Derick Developing capacity in fragile states"}, {"archivo": "Building policy capacity for managing rapid, complex change in China’s health system.pdf", "referencia_apa": "Husain, L., Bloom, G., & Xiao, Y. (2021). Building policy capacity for managing rapid, complex change in China's health system. Policy and Society, 42(1), 28-47. https://doi.org/10.1080/14494035.2021.", "año": 2021.0, "pais": "China", "nivel_gobierno": "Nacional con implementación subnacional", "tipo_regimen_burocratico": "Híbrido (burocrático-político dirigido por partido", "comparabilidad_rionegro": "Baja", "AI": 2, "AO": 3, "AS": 2, "OI": 1, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 2, "suma_puntajes": 18, "celdas_principales": "AO, OO, AS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Extiende", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "No aplica", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Building policy capacity for managing rapid, complex change in China’s health sy"}, {"archivo": "Cameron 2024 teaching policy capacity a collaborative and constructivist workshop.pdf.pdf", "referencia_apa": "Cameron, B. T. (2025). Teaching policy capacity: A collaborative and constructivist workshop. Teaching Public Administration, 43(1), 96-107. https://doi.org/10.1177/01447394241230150", "año": 2025.0, "pais": "Canadá", "nivel_gobierno": "Provincial (subnacional)", "tipo_regimen_burocratico": "Weberiano consolidado", "comparabilidad_rionegro": "Media", "AI": 2, "AO": 3, "AS": 2, "OI": 2, "OO": 3, "OS": 1, "PI": 2, "PO": 1, "PS": 1, "suma_puntajes": 17, "celdas_principales": "AO, OO, AI", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "ANCLAJE BLANDO", "tiene_cadena_causal": "Sí", "P1_veredicto": "No aplica", "P2_veredicto": "Soporta", "P3_veredicto": "No aplica", "P4_veredicto": "Extiende", "clasificacion": "COMPLEMENTARIA", "fecha_ficha": "2026-04-13", "titulo": "Cameron 2024 teaching policy capacity a collaborative and constructivist worksho"}, {"archivo": "Cameron y Evans 2024 Policy capacity research an overview and bibliography of the international literature 1978-023.pdf.pdf", "referencia_apa": "Cameron, B. T., & Evans, B. (2024). Policy capacity research: An overview and bibliography of the international literature, 1978 to 2023. International Review of Public Policy, 6(1), 110-141. https://", "año": 2024.0, "pais": "Múltiples (revisión internacional)", "nivel_gobierno": "Mixto (predominantemente nacional y estatal)", "tipo_regimen_burocratico": "Principalmente weberianos occidentales", "comparabilidad_rionegro": "Baja", "AI": 1, "AO": 2, "AS": 1, "OI": 1, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 2, "suma_puntajes": 15, "celdas_principales": "OO, AO, PS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "No aplica", "P2_veredicto": "Soporta", "P3_veredicto": "Extiende", "P4_veredicto": "Soporta", "clasificacion": "COMPLEMENTARIA", "fecha_ficha": "2026-04-13", "titulo": "Cameron y Evans 2024 Policy capacity research an overview and bibliography of th"}, {"archivo": "Capano, Howlett y Ramesh Varieties of governance.pdf.pdf", "referencia_apa": "Capano, G., Howlett, M., & Ramesh, M. (Eds.). (2015). Varieties of governance: Dynamics, strategies, capacities. Palgrave Macmillan.", "año": 2015.0, "pais": "Múltiples países desarrollados (Australia, Canadá,", "nivel_gobierno": "Múltiple (nacional, subnacional, sectorial)", "tipo_regimen_burocratico": "Weberianos consolidados", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 2, "OI": 1, "OO": 3, "OS": 3, "PI": 1, "PO": 2, "PS": 2, "suma_puntajes": 17, "celdas_principales": "OO, OS, AO", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "No aplica", "P3_veredicto": "Soporta", "P4_veredicto": "No aplica", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Capano, Howlett y Ramesh Varieties of governance"}, {"archivo": "Cardenas State capacity in latin america.pdf.pdf", "referencia_apa": "Cárdenas, M. (2010). State capacity in Latin America. Economía, 10(2), 1-45. Brookings Institution Press.", "año": 2010.0, "pais": "América Latina (regional)", "nivel_gobierno": "Nacional", "tipo_regimen_burocratico": "Débilmente weberiano/neopatrimonial", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 3, "AS": 2, "OI": 0, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 3, "suma_puntajes": 17, "celdas_principales": "AO, OO, PS", "n_indicadores": 5, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Extiende", "P2_veredicto": "No aplica", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Cardenas State capacity in latin america"}, {"archivo": "Cavalcante Do state capacity dimensions differently affect policy areas performance.pdf.pdf", "referencia_apa": "Cavalcante, P., & Pereira, A. K. (2019). Do State capacity dimensions differently affect policy areas performance? An analysis of a federal government. *4th International Conference on Public Policy*,", "año": 2019.0, "pais": "", "nivel_gobierno": "", "tipo_regimen_burocratico": "", "comparabilidad_rionegro": "", "AI": 0, "AO": 0, "AS": 0, "OI": 0, "OO": 0, "OS": 0, "PI": 0, "PO": 0, "PS": 0, "suma_puntajes": 0, "celdas_principales": "", "n_indicadores": 0, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "", "P2_veredicto": "", "P3_veredicto": "", "P4_veredicto": "", "clasificacion": "", "fecha_ficha": "2026-04-13", "titulo": "Cavalcante Do state capacity dimensions differently affect policy areas performa"}, {"archivo": "Cingolani 2013 The state of state capacity.pdf.pdf", "referencia_apa": "Cingolani, L. (2013). The state of state capacity: A review of concepts, evidence and measures. *Working Paper Series on Institutions and Economic Growth: IPD WP13*, Maastricht Graduate School of Gove", "año": 2013.0, "pais": "Múltiples (Europa Occidental principalmente)", "nivel_gobierno": "Nacional", "tipo_regimen_burocratico": "Weberiano (casos exitosos) vs. Patrimonial (casos ", "comparabilidad_rionegro": "Baja", "AI": 1, "AO": 3, "AS": 2, "OI": 1, "OO": 3, "OS": 3, "PI": 0, "PO": 2, "PS": 2, "suma_puntajes": 17, "celdas_principales": "AO, OO, OS", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "No aplica", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Cingolani 2013 The state of state capacity"}, {"archivo": "Craft, Howlett et al Assessig policy capacity for climate change adaptation.pdf.pdf", "referencia_apa": "Craft, J., Howlett, M., Crawford, M., & McNutt, K. (2013). Assessing policy capacity for climate change adaptation: Governance arrangements, resource deployments, and analytical skills in Canadian inf", "año": 2013.0, "pais": "Canadá", "nivel_gobierno": "Federal y subnacional (provincial/territorial)", "tipo_regimen_burocratico": "Weberiano fuerte (servicio civil profesional, esta", "comparabilidad_rionegro": "Media", "AI": 3, "AO": 3, "AS": 2, "OI": 2, "OO": 3, "OS": 3, "PI": 1, "PO": 2, "PS": 1, "suma_puntajes": 20, "celdas_principales": "AI, AO, OO, OS", "n_indicadores": 6, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "Desafía", "P2_veredicto": "No aplica", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Craft, Howlett et al Assessig policy capacity for climate change adaptation"}, {"archivo": "Developing administrative capacity  an agenda for research and practice.pdf.pdf", "referencia_apa": "El-Taliawi, O. G., & Van Der Wal, Z. (2019). Developing administrative capacity: an agenda for research and practice. Policy Design and Practice, 2(3), 243-257. https://doi.org/10.1080/25741292.2019.1", "año": 2019.0, "pais": "Revisión de literatura (múltiples países en desarr", "nivel_gobierno": "múltiples niveles", "tipo_regimen_burocratico": "neopatrimonial/híbrido", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 3, "AS": 2, "OI": 2, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 1, "suma_puntajes": 17, "celdas_principales": "AO, OO, OI", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Desafía", "P3_veredicto": "Soporta", "P4_veredicto": "Soporta", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Developing administrative capacity  an agenda for research and practice"}, {"archivo": "Eckersley_and_Tobin_2019 The impact of austeruty on policy capacity in local government.pdf.pdf", "referencia_apa": "Eckersley, P., & Tobin, P. (2019). The impact of austerity on policy capacity in local government. *Policy & Politics*, publicación online anticipada. https://doi.org/10.1332/030557319X15613701303511", "año": 2019.0, "pais": "Reino Unido", "nivel_gobierno": "Municipal", "tipo_regimen_burocratico": "Weberiano debilitado por austeridad", "comparabilidad_rionegro": "Media", "AI": 2, "AO": 3, "AS": 1, "OI": 1, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 2, "suma_puntajes": 17, "celdas_principales": "AO, OO, OS", "n_indicadores": 3, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "Extiende", "P2_veredicto": "No aplica", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Eckersley_and_Tobin_2019 The impact of austeruty on policy capacity in local gov"}, {"archivo": "Giliberto Capano (editor), Michael Howlett (editor) - A Modern Guide to Public Policy-Edward Elgar (2020).pdf.pdf", "referencia_apa": "Capano, G., & Howlett, M. (Eds.). (2020). A Modern Guide to Public Policy. Edward Elgar Publishing.", "año": 2020.0, "pais": "Múltiples (guía académica general)", "nivel_gobierno": "Múltiples niveles (nacional/subnacional/internacio", "tipo_regimen_burocratico": "Weberianos tradicionales (contexto histórico post-", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 1, "OI": 1, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 2, "suma_puntajes": 15, "celdas_principales": "OO, AO, OS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "Soporta", "clasificacion": "COMPLEMENTARIA", "fecha_ficha": "2026-04-13", "titulo": "Giliberto Capano (editor), Michael Howlett (editor) - A Modern Guide to Public P"}, {"archivo": "Gomide et al 2018 THE CONCEPT OF STATE CAPACITY AND ITS OPERATIONALIZATION IN EMPIRICAL RESEARCH.pdf.pdf", "referencia_apa": "Gomide, A. A., Pereira, A. K., & Machado, R. (2018). The concept of state capacity and its operationalization in empirical research. Presentado en International Public Policy Association - IPPA 1st In", "año": 2018.0, "pais": "Brasil", "nivel_gobierno": "Transversal (marco aplicable a múltiples niveles)", "tipo_regimen_burocratico": "Híbrido (weberiano-neopatrimonial)", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 1, "OI": 1, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 2, "suma_puntajes": 15, "celdas_principales": "OO, PO, PS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "Soporta", "clasificacion": "FUNDAMENTAL", "fecha_ficha": "2026-04-13", "titulo": "Gomide et al 2018 THE CONCEPT OF STATE CAPACITY AND ITS OPERATIONALIZATION IN EM"}, {"archivo": "Governance - 2023 - Fern%C3%A1ndez%E2%80%90i%E2%80%90Mar%C3%ADn - Policy growth  implementation capacities  and the effect on policy performance.pdf.pdf", "referencia_apa": "Fernández-i-Marín, X., Hinterleitner, M., Knill, C., & Steinebach, Y. (2023). Policy growth, implementation capacities, and the effect on policy performance. Governance, 36(3). https://doi.org/10.1111", "año": 2023.0, "pais": "21 países OCDE (incluyendo democracias avanzadas)", "nivel_gobierno": "Nacional (con implementación multi-nivel)", "tipo_regimen_burocratico": "Weberiano consolidado", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 3, "AS": 2, "OI": 1, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 1, "suma_puntajes": 16, "celdas_principales": "AO, OO, OS", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "No aplica", "P2_veredicto": "No aplica", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Governance - 2023 - Fern%C3%A1ndez%E2%80%90i%E2%80%90Mar%C3%ADn - Policy growth "}, {"archivo": "Governance - 2025 - Capano - Does Policy Capacity Truly Matter for Governmental Effectiveness  A Conjunctural Analysis of.pdf.pdf", "referencia_apa": "Capano, G., Pritoni, A., & Profeti, S. (2025). Does policy capacity truly matter for governmental effectiveness? A conjunctural analysis of the quality of governance in Italian regions. *Governance*, ", "año": 2025.0, "pais": "Italia", "nivel_gobierno": "Estatal-departamental (regiones)", "tipo_regimen_burocratico": "Weberiano con variaciones regionales", "comparabilidad_rionegro": "Media", "AI": 3, "AO": 3, "AS": 2, "OI": 2, "OO": 3, "OS": 2, "PI": 2, "PO": 2, "PS": 2, "suma_puntajes": 21, "celdas_principales": "AO, OO, AI", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Desafía", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Governance - 2025 - Capano - Does Policy Capacity Truly Matter for Governmental "}, {"archivo": "Guy Peters Policy instruments and policy capacity.pdf.pdf", "referencia_apa": "Peters, B. G. (s.f.). Policy Instruments and Policy Capacity. En M. Painter et al. (eds.), Challenges to State Policy Capacity (pp. [páginas no disponibles]). [Editorial no disponible].", "año": "", "pais": "Análisis general (múltiples países implícitos)", "nivel_gobierno": "Análisis general (todos los niveles)", "tipo_regimen_burocratico": "Análisis general aplicable a múltiples tipos", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 0, "OI": 1, "OO": 3, "OS": 2, "PI": 2, "PO": 1, "PS": 2, "suma_puntajes": 14, "celdas_principales": "OO, OS, PI", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Guy Peters Policy instruments and policy capacity"}, {"archivo": "Haque, Ramesth etc Building administrative capacity for development.pdf.pdf", "referencia_apa": "Haque, M. S., Ramesh, M., Puppim de Oliveira, J. A., & Gomide, A. de A. (2021). Building administrative capacity for development: limits and prospects. International Review of Administrative Sciences,", "año": 2021.0, "pais": "Múltiples países (enfoque comparativo)", "nivel_gobierno": "Nacional con implicaciones subnacionales", "tipo_regimen_burocratico": "Análisis de transición de neopatrimonial a weberia", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 1, "OI": 1, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 2, "suma_puntajes": 15, "celdas_principales": "OO, PO, PS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "Soporta", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Haque, Ramesth etc Building administrative capacity for development"}, {"archivo": "Honig, Khan y Naritomi 2025 State Capacity.pdf.pdf", "referencia_apa": "Honig, D., Khan, A., & Naritomi, J. (2025). State capacity. En T. Besley, I. Bucelli, & A. Velasco (Eds.), The London Consensus: Economic principles for the 21st century (pp. 573-614). LSE Press. http", "año": 2025.0, "pais": "Múltiples (casos estilizados)", "nivel_gobierno": "Nacional y subnacional", "tipo_regimen_burocratico": "Híbrido (análisis transversal)", "comparabilidad_rionegro": "Media", "AI": 2, "AO": 3, "AS": 2, "OI": 2, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 3, "suma_puntajes": 20, "celdas_principales": "AO, OO, PS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "No aplica", "clasificacion": "FUNDAMENTAL", "fecha_ficha": "2026-04-13", "titulo": "Honig, Khan y Naritomi 2025 State Capacity"}, {"archivo": "Howlett 2018 Policy integration and policy capacity.pdf.pdf", "referencia_apa": "Howlett, M., & Saguin, K. (2018). Policy capacity for policy integration: Implications for the Sustainable Development Goals. Lee Kuan Yew School of Public Policy Working Paper Series, Working Paper N", "año": 2018.0, "pais": "", "nivel_gobierno": "", "tipo_regimen_burocratico": "", "comparabilidad_rionegro": "", "AI": 0, "AO": 0, "AS": 0, "OI": 0, "OO": 0, "OS": 0, "PI": 0, "PO": 0, "PS": 0, "suma_puntajes": 0, "celdas_principales": "", "n_indicadores": 0, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "", "P2_veredicto": "", "P3_veredicto": "", "P4_veredicto": "", "clasificacion": "", "fecha_ficha": "2026-04-13", "titulo": "Howlett 2018 Policy integration and policy capacity"}, {"archivo": "Howlett, Michael Policy anlytical capacity and evidence-based policy making.pdf.pdf", "referencia_apa": "Howlett, M. (2009). Policy analytical capacity and evidence-based policy-making: Lessons from Canada. Canadian Public Administration, 52(2), 153-175.", "año": 2009.0, "pais": "Canadá", "nivel_gobierno": "Nacional/Provincial", "tipo_regimen_burocratico": "Weberiano consolidado", "comparabilidad_rionegro": "Baja", "AI": 3, "AO": 3, "AS": 2, "OI": 1, "OO": 2, "OS": 1, "PI": 1, "PO": 2, "PS": 1, "suma_puntajes": 16, "celdas_principales": "AI, AO, PO", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Howlett, Michael Policy anlytical capacity and evidence-based policy making"}, {"archivo": "Howlett, Oliphant 2010 Environmental organizations and climate change policy capacity.pdf.pdf", "referencia_apa": "Howlett, M., & Oliphant, S. (2010). Environmental research organizations and climate change policy analytical capacity: An assessment of the Canadian case. Canadian Political Science Review, 4(2-3), 1", "año": 2010.0, "pais": "Canadá", "nivel_gobierno": "Nacional y estatal-departamental", "tipo_regimen_burocratico": "Weberiano", "comparabilidad_rionegro": "Baja", "AI": 0, "AO": 0, "AS": 0, "OI": 0, "OO": 0, "OS": 0, "PI": 0, "PO": 0, "PS": 0, "suma_puntajes": 0, "celdas_principales": "AO, AI, PO", "n_indicadores": 7, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "No aplica", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "Soporta", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Howlett, Oliphant 2010 Environmental organizations and climate change policy cap"}, {"archivo": "Howlett, Ramesh, Capano 2024 The micro dimensions of policy design a key challenge for real world policy practice.pdf.pdf", "referencia_apa": "Howlett, M., Ramesh, M., & Capano, G. (2024). The micro-dimensions of policy design: A key challenge for real-world policy practice. [Información de revista no disponible en el texto].", "año": 2024.0, "pais": "Estados Unidos y Unión Europea", "nivel_gobierno": "nacional/supranacional", "tipo_regimen_burocratico": "weberiano", "comparabilidad_rionegro": "Baja", "AI": 2, "AO": 3, "AS": 1, "OI": 2, "OO": 3, "OS": 1, "PI": 2, "PO": 1, "PS": 2, "suma_puntajes": 17, "celdas_principales": "AO, OO, AI", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "No aplica", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Howlett, Ramesh, Capano 2024 The micro dimensions of policy design a key challen"}, {"archivo": "j.polsoc.2015.09.001-3.pdf.pdf", "referencia_apa": "Wu, X., Ramesh, M., & Howlett, M. (2015). Policy capacity: A conceptual framework for understanding policy competences and capabilities. Policy and Society, 34(3-4), 165-171. https://doi.org/10.1016/j", "año": 2015.0, "pais": "", "nivel_gobierno": "", "tipo_regimen_burocratico": "", "comparabilidad_rionegro": "", "AI": 0, "AO": 0, "AS": 0, "OI": 0, "OO": 0, "OS": 0, "PI": 0, "PO": 0, "PS": 0, "suma_puntajes": 0, "celdas_principales": "", "n_indicadores": 0, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "", "P2_veredicto": "", "P3_veredicto": "", "P4_veredicto": "", "clasificacion": "", "fecha_ficha": "2026-04-13", "titulo": "j.polsoc.2015.09.001-3"}, {"archivo": "Jun Jie Woo - Capacity-building and Pandemics_ Singapore’s Response to Covid-19 (2021, Palgrave Macmillan)i.pdf.pdf", "referencia_apa": "Woo, J. J. (2021). *Capacity-building and Pandemics: Singapore's Response to Covid-19*. Palgrave Macmillan.", "año": 2021.0, "pais": "Singapur", "nivel_gobierno": "Nacional (ciudad-estado)", "tipo_regimen_burocratico": "Weberiano fuerte", "comparabilidad_rionegro": "Baja", "AI": 2, "AO": 3, "AS": 2, "OI": 1, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 1, "suma_puntajes": 17, "celdas_principales": "AO, OO, AS", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "No aplica", "P3_veredicto": "Soporta", "P4_veredicto": "No aplica", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Jun Jie Woo - Capacity-building and Pandemics_ Singapore’s Response to Covid-19 "}, {"archivo": "Karo y Kattel Innovation and the state towards an evolutionary theory of policy capacity.pdf.pdf", "referencia_apa": "Karo, E., & Kattel, R. (2016). Innovation and the State: Towards an Evolutionary Theory of Policy Capacity. En Wu, X., Howlett, M. y Ramesh, M. (eds.) Policy Capacity: State and Societal Perspectives ", "año": 2016.0, "pais": "Taiwán, Corea del Sur, Singapur", "nivel_gobierno": "Nacional", "tipo_regimen_burocratico": "Weberiano desarrollado", "comparabilidad_rionegro": "Baja", "AI": 2, "AO": 3, "AS": 2, "OI": 1, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 2, "suma_puntajes": 18, "celdas_principales": "AO, OO, AS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Karo y Kattel Innovation and the state towards an evolutionary theory of policy "}, {"archivo": "Khemani 2019 What Is State Capacity_ - World Bank Open Knowledge Repository.pdf", "referencia_apa": "Khemani, S. (2019). What Is State Capacity? Policy Research Working Paper No. 8734. World Bank. https://doi.org/10.1596/1813-9450-8734", "año": 2019.0, "pais": "Revisión teórica global", "nivel_gobierno": "Transversal (todos los niveles)", "tipo_regimen_burocratico": "Marco aplicable a múltiples tipos", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 1, "OI": 2, "OO": 3, "OS": 2, "PI": 2, "PO": 1, "PS": 3, "suma_puntajes": 17, "celdas_principales": "OO, PS, OI", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Extiende", "P4_veredicto": "Soporta", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Khemani 2019 What Is State Capacity_ - World Bank Open Knowledge Repository"}, {"archivo": "Kim et al 2022 Policy capacity and rise of Data based labs.pdf.pdf", "referencia_apa": "Kim, S., Wellstead, A. M., & Heikkila, T. (2022). Policy capacity and rise of data-based policy innovation labs. Review of Policy Research, 39(4). DOI: 10.1111/ropr.12494", "año": 2022.0, "pais": "Multiple (133 labs globales, concentración en Euro", "nivel_gobierno": "Múltiple (nacional/estatal/municipal)", "tipo_regimen_burocratico": "Weberiano/híbrido", "comparabilidad_rionegro": "Media", "AI": 3, "AO": 3, "AS": 2, "OI": 2, "OO": 3, "OS": 1, "PI": 1, "PO": 2, "PS": 1, "suma_puntajes": 18, "celdas_principales": "AI, AO, OO", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "Soporta", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Kim et al 2022 Policy capacity and rise of Data based labs"}, {"archivo": "Marco Just Quiles - Fragmented State Capacity_ External Dependencies, Subnational Actors, and Local Public Services in Bolivia (2019, Springer VS).pdf.pdf", "referencia_apa": "Quiles, M. J. (2019). *Fragmented State Capacity: External Dependencies, Subnational Actors, and Local Public Services in Bolivia*. Springer VS.", "año": 2019.0, "pais": "", "nivel_gobierno": "", "tipo_regimen_burocratico": "", "comparabilidad_rionegro": "", "AI": 0, "AO": 0, "AS": 0, "OI": 0, "OO": 0, "OS": 0, "PI": 0, "PO": 0, "PS": 0, "suma_puntajes": 0, "celdas_principales": "", "n_indicadores": 0, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "", "P2_veredicto": "", "P3_veredicto": "", "P4_veredicto": "", "clasificacion": "", "fecha_ficha": "2026-04-13", "titulo": "Marco Just Quiles - Fragmented State Capacity_ External Dependencies, Subnationa"}, {"archivo": "Martin_Painter,_Jon_Pierre_Challenges_to_State_Policy capacity.pdf.pdf", "referencia_apa": "Painter, M., & Pierre, J. (Eds.). (2005). *Challenges to State Policy Capacity: Global Trends and Comparative Perspectives*. Palgrave Macmillan.", "año": 2005.0, "pais": "Múltiples (Europa, América del Norte, Australia, A", "nivel_gobierno": "Principalmente nacional, algunos casos subnacional", "tipo_regimen_burocratico": "Principalmente weberianos en transición hacia nuev", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 3, "AS": 2, "OI": 1, "OO": 3, "OS": 2, "PI": 2, "PO": 2, "PS": 3, "suma_puntajes": 19, "celdas_principales": "AO, OO, PS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Extiende", "P4_veredicto": "Soporta", "clasificacion": "FUNDAMENTAL", "fecha_ficha": "2026-04-13", "titulo": "Martin_Painter,_Jon_Pierre_Challenges_to_State_Policy capacity"}, {"archivo": "Michel, Cynthia 2024 Social policy expansion in latin america amidst limited capacities.pdf.pdf", "referencia_apa": "Michel, C. L. (2024). Social policy expansion in Latin America amidst limited capacities [Tesis doctoral]. Hertie School.", "año": 2024.0, "pais": "Colombia, México", "nivel_gobierno": "Municipal/subnacional", "tipo_regimen_burocratico": "Híbrido con elementos neopatrimoniales", "comparabilidad_rionegro": "Alta", "AI": 1, "AO": 2, "AS": 0, "OI": 1, "OO": 3, "OS": 1, "PI": 1, "PO": 2, "PS": 1, "suma_puntajes": 12, "celdas_principales": "OO, AO, PO", "n_indicadores": 3, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "No aplica", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Michel, Cynthia 2024 Social policy expansion in latin america amidst limited cap"}, {"archivo": "Mobilizing Policy (In)Capacity to Fight COVID-19_ Understanding Variations in State Responses.pdf", "referencia_apa": "Capano, G., Howlett, M., Jarvis, D. S. L., Ramesh, M., & Goyal, N. (2020). Mobilizing policy (in)capacity to fight COVID-19: Understanding variations in state responses. Policy and Society, 39(3), 285", "año": 2020.0, "pais": "Múltiples (China, Italia, Singapur, Israel, Estado", "nivel_gobierno": "Nacional", "tipo_regimen_burocratico": "Predominantemente weberiano con variaciones", "comparabilidad_rionegro": "Media", "AI": 2, "AO": 3, "AS": 2, "OI": 2, "OO": 3, "OS": 3, "PI": 2, "PO": 1, "PS": 2, "suma_puntajes": 20, "celdas_principales": "AO, OO, OS", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Mobilizing Policy (In)Capacity to Fight COVID-19_ Understanding Variations in St"}, {"archivo": "Mohd Barakbah, Zainuddin, Faiz Yaakob Unraveling the Factors Affecting Policy Capacity A Systematic Literature Review.pdf.pdf", "referencia_apa": "Barakbah, N. B. M., Zainuddin, A., & Yaakob, A. F. (2025). Unraveling the factors affecting policy capacity: A systematic literature review. En A. Y. Andi & I. Nuralamsyah (Eds.), Proceedings of the 2", "año": 2025.0, "pais": "India (caso empírico), Malasia (autores)", "nivel_gobierno": "Local/comunitario (CHW initiative)", "tipo_regimen_burocratico": "Híbrido con elementos jerárquicos tradicionales", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 0, "OI": 1, "OO": 3, "OS": 0, "PI": 2, "PO": 1, "PS": 0, "suma_puntajes": 10, "celdas_principales": "OO, AO, PI", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "", "clasificacion": "COMPLEMENTARIA", "fecha_ficha": "2026-04-13", "titulo": "Mohd Barakbah, Zainuddin, Faiz Yaakob Unraveling the Factors Affecting Policy Ca"}, {"archivo": "Mukherjee, Coban, y Bali, Azad S - Policy capacities and effective policy design_ a review (2021, Springer Science and Business Media LLC).pdf.pdf", "referencia_apa": "Mukherjee, I., Coban, M. K., & Bali, A. S. (2021). Policy capacities and effective policy design: a review. Policy Sciences, 1-25. https://doi.org/10.1007/s11077-021-09420-8", "año": 2021.0, "pais": "", "nivel_gobierno": "", "tipo_regimen_burocratico": "", "comparabilidad_rionegro": "", "AI": 0, "AO": 0, "AS": 0, "OI": 0, "OO": 0, "OS": 0, "PI": 0, "PO": 0, "PS": 0, "suma_puntajes": 0, "celdas_principales": "", "n_indicadores": 0, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "", "P2_veredicto": "", "P3_veredicto": "", "P4_veredicto": "", "clasificacion": "", "fecha_ficha": "2026-04-13", "titulo": "Mukherjee, Coban, y Bali, Azad S - Policy capacities and effective policy design"}, {"archivo": "Nemec 2015 Local government structure and capacities.pdf.pdf", "referencia_apa": "Nemec, J., & de Vries, M. S. (2015). Local Government Structure and Capacities in Europe. Viešoji Politika ir Administravimas/Public Policy and Administration, 14(3), 249-267. http://dx.doi.org/10.575", "año": 2015.0, "pais": "47 países europeos (miembros Consejo de Europa)", "nivel_gobierno": "Municipal y regional", "tipo_regimen_burocratico": "Predominantemente weberiano con variaciones region", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 3, "OI": 1, "OO": 3, "OS": 3, "PI": 0, "PO": 2, "PS": 2, "suma_puntajes": 17, "celdas_principales": "AS, OO, OS", "n_indicadores": 5, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "Soporta", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Nemec 2015 Local government structure and capacities"}, {"archivo": "Peters, B. Guy The capacity to govern moving back to the center.pdf.pdf", "referencia_apa": "Peters, B. G. (sin fecha). The capacity to govern: Moving back to the center? Department of Political Science, University of Pittsburgh.", "año": "", "pais": "Múltiples (Reino Unido, países nórdicos, Países Ba", "nivel_gobierno": "Transversal (nacional y subnacional)", "tipo_regimen_burocratico": "Weberianos en transición hacia modelos híbridos", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 1, "OI": 1, "OO": 3, "OS": 2, "PI": 2, "PO": 2, "PS": 3, "suma_puntajes": 17, "celdas_principales": "OO, PS, AO", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Extiende", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "COMPLEMENTARIA", "fecha_ficha": "2026-04-13", "titulo": "Peters, B. Guy The capacity to govern moving back to the center"}, {"archivo": "Peters, Guy 2015 Policy capacity in public administration.pdf.pdf", "referencia_apa": "Peters, B. G. (2015). Policy capacity in public administration. Policy and Society, 34(3-4), 219-228. https://doi.org/10.1016/j.polsoc.2015.09.005", "año": 2015.0, "pais": "", "nivel_gobierno": "", "tipo_regimen_burocratico": "", "comparabilidad_rionegro": "", "AI": 0, "AO": 0, "AS": 0, "OI": 0, "OO": 0, "OS": 0, "PI": 0, "PO": 0, "PS": 0, "suma_puntajes": 0, "celdas_principales": "", "n_indicadores": 0, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "", "P2_veredicto": "", "P3_veredicto": "", "P4_veredicto": "", "clasificacion": "", "fecha_ficha": "2026-04-13", "titulo": "Peters, Guy 2015 Policy capacity in public administration"}, {"archivo": "Pill 2024 Rethinking the  local state  and local capacity.pdf.pdf", "referencia_apa": "Pill, M. (2024). Rethinking the 'local state' and local capacity. Local Government Studies, 50(6), 998-1007. https://doi.org/10.1080/03003930.2024.2377224", "año": 2024.0, "pais": "", "nivel_gobierno": "", "tipo_regimen_burocratico": "", "comparabilidad_rionegro": "", "AI": 0, "AO": 0, "AS": 0, "OI": 0, "OO": 0, "OS": 0, "PI": 0, "PO": 0, "PS": 0, "suma_puntajes": 0, "celdas_principales": "", "n_indicadores": 0, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "", "P2_veredicto": "", "P3_veredicto": "", "P4_veredicto": "", "clasificacion": "", "fecha_ficha": "2026-04-13", "titulo": "Pill 2024 Rethinking the  local state  and local capacity"}, {"archivo": "Policy capacity  evolving theory and missing links.pdf.pdf", "referencia_apa": "Brenton, S., Baekkeskov, E., & Hannah, A. (2023). Policy capacity: evolving theory and missing links. Policy Studies, 44(3), 297-315. https://doi.org/10.1080/01442872.2022.2043266", "año": 2023.0, "pais": "Múltiples (revisión teórica)", "nivel_gobierno": "Transversal (nacional/subnacional)", "tipo_regimen_burocratico": "Principalmente weberiano tradicional vs. post-refo", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 1, "OI": 2, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 3, "suma_puntajes": 17, "celdas_principales": "OO, PS, AO", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "Soporta", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Policy capacity  evolving theory and missing links"}, {"archivo": "Policy Capacity and Local Disaster Management Effectiveness_ Assessing Institutional Performance in Rokan Hulu Regency, Indonesia - IIETA.pdf", "referencia_apa": "Alhadi, Z., Permana, I., Putera, R. E., Eriyanti, F., Yusran, R., Hidayat, R., Fajri, H., & Riandini, O. (2026). Policy capacity and local disaster management effectiveness: Assessing institutional pe", "año": 2026.0, "pais": "Indonesia", "nivel_gobierno": "Municipal (Regencia)", "tipo_regimen_burocratico": "Híbrido (formal-descentralizado con limitaciones d", "comparabilidad_rionegro": "Media", "AI": 3, "AO": 3, "AS": 2, "OI": 2, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 2, "suma_puntajes": 20, "celdas_principales": "AI, AO, OO", "n_indicadores": 5, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "Soporta", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Policy Capacity and Local Disaster Management Effectiveness_ Assessing Instituti"}, {"archivo": "Policy Capacity and Local Disaster Management Effectiveness_ Assessing Institutional Performance in Rokan Hulu Regency, Indonesia _ IIETA.pdf", "referencia_apa": "Alhadi, Z., Permana, I., Putera, R. E., Eriyanti, F., Yusran, R., Hidayat, R., Fajri, H., & Riandini, O. (2026). Policy capacity and local disaster management effectiveness: Assessing institutional pe", "año": 2026.0, "pais": "Indonesia", "nivel_gobierno": "Municipal (Regency)", "tipo_regimen_burocratico": "Híbrido (descentralizado con dependencia central)", "comparabilidad_rionegro": "Media", "AI": 2, "AO": 3, "AS": 1, "OI": 1, "OO": 3, "OS": 2, "PI": 2, "PO": 2, "PS": 1, "suma_puntajes": 17, "celdas_principales": "AO, OO, PI", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Policy Capacity and Local Disaster Management Effectiveness_ Assessing Instituti"}, {"archivo": "Policy capacity_ A conceptual framework for understanding policy competences and capabilities - Simon Fraser University.pdf", "referencia_apa": "Wu, X., Ramesh, M., & Howlett, M. (2015). Policy capacity: A conceptual framework for understanding policy competences and capabilities. Policy and Society, xxx(xxx), xxx-xxx.", "año": 2015.0, "pais": "Marco conceptual general (no específico de país)", "nivel_gobierno": "Transversal (aplicable a todos los niveles)", "tipo_regimen_burocratico": "Marco general aplicable a diversos tipos", "comparabilidad_rionegro": "Alta", "AI": 2, "AO": 3, "AS": 2, "OI": 2, "OO": 3, "OS": 2, "PI": 2, "PO": 2, "PS": 3, "suma_puntajes": 21, "celdas_principales": "AO, OO, PS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "FUNDAMENTAL", "fecha_ficha": "2026-04-13", "titulo": "Policy capacity_ A conceptual framework for understanding policy competences and"}, {"archivo": "Policy capacity_ A conceptual framework for understanding policy competences and capabilities.pdf", "referencia_apa": "Wu, X., Ramesh, M., & Howlett, M. (2015). Policy capacity: A conceptual framework for understanding policy competences and capabilities. Policy and Society, 34(3-4), 165-171. https://doi.org/10.1016/j", "año": 2015.0, "pais": "Marco teórico general (no específico de país)", "nivel_gobierno": "Transversal (aplicable a todos los niveles)", "tipo_regimen_burocratico": "Genérico (aplicable a múltiples tipos)", "comparabilidad_rionegro": "Alta", "AI": 2, "AO": 3, "AS": 2, "OI": 2, "OO": 3, "OS": 2, "PI": 2, "PO": 3, "PS": 3, "suma_puntajes": 22, "celdas_principales": "AO, OO, PO, PS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "No aplica", "clasificacion": "FUNDAMENTAL", "fecha_ficha": "2026-04-13", "titulo": "Policy capacity_ A conceptual framework for understanding policy competences and"}, {"archivo": "Policy effectiveness and capacity  two sides of the design coin.pdf.pdf", "referencia_apa": "Mukherjee, I., & Bali, A. S. (2019). Policy effectiveness and capacity: two sides of the design coin. Policy Design and Practice, 2(2), 103-114. https://doi.org/10.1080/25741292.2019.1632616", "año": 2019.0, "pais": "Artículo conceptual/teórico", "nivel_gobierno": "Transversal (aplica a todos los niveles)", "tipo_regimen_burocratico": "Teórico (aplicable a múltiples contextos)", "comparabilidad_rionegro": "Alta", "AI": 2, "AO": 3, "AS": 2, "OI": 2, "OO": 3, "OS": 2, "PI": 2, "PO": 3, "PS": 2, "suma_puntajes": 21, "celdas_principales": "AO, OO, PO", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "No aplica", "clasificacion": "FUNDAMENTAL", "fecha_ficha": "2026-04-13", "titulo": "Policy effectiveness and capacity  two sides of the design coin"}, {"archivo": "Ramesh y Howlett the role of policy capacity in policy success and failure.pdf.pdf", "referencia_apa": "Ramesh, M., & Howlett, M. (2026). The role of policy capacity in policy success and failure. [Capítulo 28 de libro académico].", "año": 2026.0, "pais": "Teórico (países desarrollados y en desarrollo)", "nivel_gobierno": "Transversal (todos los niveles)", "tipo_regimen_burocratico": "Múltiples tipos (híbridos, weberianos, basados en ", "comparabilidad_rionegro": "Media", "AI": 2, "AO": 2, "AS": 2, "OI": 2, "OO": 3, "OS": 2, "PI": 2, "PO": 2, "PS": 2, "suma_puntajes": 19, "celdas_principales": "OO, AO, OI", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "FUNDAMENTAL", "fecha_ficha": "2026-04-13", "titulo": "Ramesh y Howlett the role of policy capacity in policy success and failure"}, {"archivo": "Ramesh, Howlett, Saguin 2015 Measuring Individual Level Analytical Manageria land Political Policy Capacity.pdf.pdf", "referencia_apa": "Ramesh, M., Howlett, M., & Saguin, K. (2016). Measuring individual-level analytical, managerial and political policy capacity: A survey instrument (Working Paper No. LKYSPP 16-07). Lee Kuan Yew School", "año": 2016.0, "pais": "Singapore (con referencias a estudios en Canadá, E", "nivel_gobierno": "Múltiple (federal, estatal, local)", "tipo_regimen_burocratico": "Weberiano (con elementos post-NPM)", "comparabilidad_rionegro": "Media", "AI": 3, "AO": 1, "AS": 1, "OI": 3, "OO": 2, "OS": 1, "PI": 3, "PO": 2, "PS": 1, "suma_puntajes": 17, "celdas_principales": "AI, OI, PI", "n_indicadores": 4, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "No aplica", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "Soporta", "clasificacion": "FUNDAMENTAL", "fecha_ficha": "2026-04-13", "titulo": "Ramesh, Howlett, Saguin 2015 Measuring Individual Level Analytical Manageria lan"}, {"archivo": "Regonini 2017 Governmentalities without policy capacity.pdf.pdf", "referencia_apa": "Regonini, G. (2017). Governmentalities without policy capacity. Policy Sciences, 50(2), 163-178. https://doi.org/10.1007/s11077-017-9283-3", "año": 2017.0, "pais": "Francia, Alemania, España, Italia", "nivel_gobierno": "Nacional (con implicaciones subnacionales)", "tipo_regimen_burocratico": "Weberiano tradicional con base en derecho administ", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 3, "OI": 1, "OO": 2, "OS": 2, "PI": 1, "PO": 3, "PS": 3, "suma_puntajes": 18, "celdas_principales": "AS, PO, PS", "n_indicadores": 0, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "No aplica", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "COMPLEMENTARIA", "fecha_ficha": "2026-04-13", "titulo": "Regonini 2017 Governmentalities without policy capacity"}, {"archivo": "Review of Policy Research - 2025 - Bandelow - Policy Design  Diffusion  and Policy Instrument Attitudes.pdf.pdf", "referencia_apa": "Bandelow, N. C., Hornung, J., & Schröder, I. (2025). Policy Design, Diffusion, and Policy Instrument Attitudes. Review of Policy Research, 42(4). https://doi.org/10.1111/ropr.70032", "año": 2025.0, "pais": "Estados Unidos, China, múltiples países", "nivel_gobierno": "Estatal-departamental/nacional", "tipo_regimen_burocratico": "Weberiano/híbrido", "comparabilidad_rionegro": "Media", "AI": 2, "AO": 2, "AS": 1, "OI": 1, "OO": 3, "OS": 3, "PI": 2, "PO": 2, "PS": 2, "suma_puntajes": 18, "celdas_principales": "OO, OS, AI", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "No aplica", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Review of Policy Research - 2025 - Bandelow - Policy Design  Diffusion  and Poli"}, {"archivo": "Saguin y Ramesh 2025 Policy Capacity Under Decentralization  Kindergarten Education Reforms in the.pdf.pdf", "referencia_apa": "Saguin, K. I., & Ramesh, M. (2025). Policy Capacity Under Decentralization: Kindergarten Education Reforms in the Philippines. Public Administration and Development.", "año": 2025.0, "pais": "Filipinas", "nivel_gobierno": "Nacional-subnacional (departamental/regional)", "tipo_regimen_burocratico": "Híbrido descentralizado", "comparabilidad_rionegro": "Media", "AI": 2, "AO": 1, "AS": 1, "OI": 2, "OO": 3, "OS": 3, "PI": 1, "PO": 2, "PS": 1, "suma_puntajes": 16, "celdas_principales": "OO, OS, OI", "n_indicadores": 3, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "No aplica", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Saguin y Ramesh 2025 Policy Capacity Under Decentralization  Kindergarten Educat"}, {"archivo": "Setiawan 2022 The Impact of Local Government Capacity on Public Service Delivery_ Lessons Learned from Decentralized Indonesia .pdf", "referencia_apa": "Setiawan, A., Tjiptoherijanto, P., Mahi, B. R., & Khoirunurrofik, K. (2022). The impact of local government capacity on public service delivery: Lessons learned from decentralized Indonesia. *Economie", "año": 2022.0, "pais": "Indonesia", "nivel_gobierno": "Municipal/local", "tipo_regimen_burocratico": "Híbrido post-descentralización", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 3, "AS": 0, "OI": 1, "OO": 3, "OS": 2, "PI": 1, "PO": 2, "PS": 2, "suma_puntajes": 15, "celdas_principales": "AO, OO, OS", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "No aplica", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Setiawan 2022 The Impact of Local Government Capacity on Public Service Delivery"}, {"archivo": "Singh y Ramesh 2023 Knowledge–practice gap in healthcare payments the role of policy capacity.pdf.pdf", "referencia_apa": "Bali, A. S., & Ramesh, M. (2023). Knowledge–practice gap in healthcare payments: the role of policy capacity. Policy and Society, 42(3), 406–418. https://doi.org/10.1093/polsoc/puad019", "año": 2023.0, "pais": "", "nivel_gobierno": "", "tipo_regimen_burocratico": "", "comparabilidad_rionegro": "", "AI": 0, "AO": 0, "AS": 0, "OI": 0, "OO": 0, "OS": 0, "PI": 0, "PO": 0, "PS": 0, "suma_puntajes": 0, "celdas_principales": "", "n_indicadores": 0, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "", "P2_veredicto": "", "P3_veredicto": "", "P4_veredicto": "", "clasificacion": "", "fecha_ficha": "2026-04-13", "titulo": "Singh y Ramesh 2023 Knowledge–practice gap in healthcare payments the role of po"}, {"archivo": "Subnational development, state capacities and policy implementation_ a comparative analysis of Brazil, Chile, and Colombia - BibBase.pdf", "referencia_apa": "Hernández Bonivento, J. A., Grin, E., & Vial-Cosanni, C. (2025). Subnational development, state capacities and policy implementation: a comparative analysis of Brazil, Chile, and Colombia. En L. Secch", "año": 2025.0, "pais": "", "nivel_gobierno": "", "tipo_regimen_burocratico": "", "comparabilidad_rionegro": "", "AI": 0, "AO": 0, "AS": 0, "OI": 0, "OO": 0, "OS": 0, "PI": 0, "PO": 0, "PS": 0, "suma_puntajes": 0, "celdas_principales": "", "n_indicadores": 0, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "", "P2_veredicto": "", "P3_veredicto": "", "P4_veredicto": "", "clasificacion": "", "fecha_ficha": "2026-04-13", "titulo": "Subnational development, state capacities and policy implementation_ a comparati"}, {"archivo": "Understanding policy integration through an integrative capacity framework.pdf", "referencia_apa": "Vince, J., Fudge, M., Fullbrook, L., & Haward, M. (2024). Understanding policy integration through an integrative capacity framework. Policy and Society, 43(3), 381-395. https://doi.org/10.1093/polsoc", "año": 2024.0, "pais": "Australia", "nivel_gobierno": "Múltiples niveles (enfoque multinivel)", "tipo_regimen_burocratico": "Weberiano consolidado", "comparabilidad_rionegro": "Media", "AI": 1, "AO": 2, "AS": 1, "OI": 2, "OO": 3, "OS": 2, "PI": 2, "PO": 2, "PS": 3, "suma_puntajes": 18, "celdas_principales": "OO, PS, OI", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "Soporta", "P3_veredicto": "Extiende", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Understanding policy integration through an integrative capacity framework"}, {"archivo": "Walter, Tiernan, Head, Edwars 2019 Policy capacity in disruptive times.pdf.pdf", "referencia_apa": "Walter, J., Tiernan, A., Head, B., & Edwards, M. (2019). Policy capacity in disruptive times. Australian Journal of Political Science, 54(4), 465-479.", "año": 2019.0, "pais": "Australia", "nivel_gobierno": "Nacional con implicaciones subnacionales", "tipo_regimen_burocratico": "Weberiano tradicional en transición/crisis", "comparabilidad_rionegro": "Media", "AI": 2, "AO": 3, "AS": 2, "OI": 1, "OO": 2, "OS": 2, "PI": 3, "PO": 3, "PS": 3, "suma_puntajes": 21, "celdas_principales": "AO, PI, PO, PS", "n_indicadores": 5, "tiene_encuesta_escala": "No", "tiene_intervenciones": "No", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "No aplica", "P2_veredicto": "Extiende", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "IMPORTANTE", "fecha_ficha": "2026-04-13", "titulo": "Walter, Tiernan, Head, Edwars 2019 Policy capacity in disruptive times"}, {"archivo": "Wang-xu 2018-awakening-leviathan-the-effect-of-democracy-on-state-capacity.pdf.pdf", "referencia_apa": "Wang, E. H., & Xu, Y. (2018). Awakening Leviathan: The effect of democracy on state capacity. Research and Politics, 5(2), 1-7. https://doi.org/10.1177/2053168018772398", "año": 2018.0, "pais": "Panel global (174 países)", "nivel_gobierno": "Nacional", "tipo_regimen_burocratico": "Weberiano vs. neopatrimonial (implícito)", "comparabilidad_rionegro": "Media", "AI": 0, "AO": 1, "AS": 2, "OI": 0, "OO": 2, "OS": 3, "PI": 1, "PO": 2, "PS": 3, "suma_puntajes": 14, "celdas_principales": "OS, PS, OO", "n_indicadores": 4, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "Soporta", "P2_veredicto": "No aplica", "P3_veredicto": "Desafía", "P4_veredicto": "No aplica", "clasificacion": "COMPLEMENTARIA", "fecha_ficha": "2026-04-13", "titulo": "Wang-xu 2018-awakening-leviathan-the-effect-of-democracy-on-state-capacity"}, {"archivo": "Wellstead, Stedman 2015 Mainstreaming and beyond_ Policy capacity and climate change decision making.pdf.pdf", "referencia_apa": "Wellstead, A., & Stedman, R. (2015). Mainstreaming and beyond: Policy capacity and climate change decision-making. Michigan Journal of Sustainability, 3. http://dx.doi.org/10.3998/mjs.12333712.0003.00", "año": 2015.0, "pais": "Estados Unidos", "nivel_gobierno": "Multiple (federal/estatal/municipal)", "tipo_regimen_burocratico": "Weberiano con elementos de new governance", "comparabilidad_rionegro": "Media", "AI": 2, "AO": 1, "AS": 1, "OI": 2, "OO": 2, "OS": 1, "PI": 1, "PO": 2, "PS": 1, "suma_puntajes": 13, "celdas_principales": "AI, OI, OO", "n_indicadores": 5, "tiene_encuesta_escala": "No", "tiene_intervenciones": "Sí", "tipo_intervenciones": "ANCLAJE DURO; ANCLAJE BLANDO; REFORMA ESTRUCTURAL", "tiene_cadena_causal": "Sí", "P1_veredicto": "No aplica", "P2_veredicto": "Soporta", "P3_veredicto": "Soporta", "P4_veredicto": "Extiende", "clasificacion": "COMPLEMENTARIA", "fecha_ficha": "2026-04-13", "titulo": "Wellstead, Stedman 2015 Mainstreaming and beyond_ Policy capacity and climate ch"}, {"archivo": "Wellstead, Stedman Climate Change Policy Capacity at the Sub-National Government Level.pdf.pdf", "referencia_apa": "Wellstead, A. M., & Stedman, R. C. (2011). Climate Change Policy Capacity at the Sub-National Government Level. Journal of Comparative Policy Analysis: Research and Practice, 13(5), 461-478. https://d", "año": 2011.0, "pais": "", "nivel_gobierno": "", "tipo_regimen_burocratico": "", "comparabilidad_rionegro": "", "AI": 0, "AO": 0, "AS": 0, "OI": 0, "OO": 0, "OS": 0, "PI": 0, "PO": 0, "PS": 0, "suma_puntajes": 0, "celdas_principales": "", "n_indicadores": 0, "tiene_encuesta_escala": "Sí", "tiene_intervenciones": "Sí", "tipo_intervenciones": "", "tiene_cadena_causal": "Sí", "P1_veredicto": "", "P2_veredicto": "", "P3_veredicto": "", "P4_veredicto": "", "clasificacion": "", "fecha_ficha": "2026-04-13", "titulo": "Wellstead, Stedman Climate Change Policy Capacity at the Sub-National Government"}];
+
+// ── HELPERS ──
+const CELDAS = ['AI','AO','AS','OI','OO','OS','PI','PO','PS'];
+const COMPS = ['Analítica','Operativa','Política'];
+const NIVELES = ['Individual','Organizacional','Sistémico'];
+const CELDA_MAP = [['AI','AO','AS'],['OI','OO','OS'],['PI','PO','PS']];
+const CELDA_LABELS = {AI:'Analít-Ind',AO:'Analít-Org',AS:'Analít-Sis',OI:'Oper-Ind',OO:'Oper-Org',OS:'Oper-Sis',PI:'Polít-Ind',PO:'Polít-Org',PS:'Polít-Sis'};
+
+function validData() { return DATA.filter(d => d.clasificacion && d.suma_puntajes > 0); }
+function avg(arr) { return arr.length ? arr.reduce((a,b) => a+b, 0) / arr.length : 0; }
+function heatColor(val, max) {
+  const pct = max > 0 ? val / max : 0;
+  if (pct >= 0.75) return { bg: 'rgba(79,209,197,0.25)', fg: '#4fd1c5' };
+  if (pct >= 0.5)  return { bg: 'rgba(104,211,145,0.2)', fg: '#68d391' };
+  if (pct >= 0.25) return { bg: 'rgba(246,173,85,0.18)', fg: '#f6ad55' };
+  return { bg: 'rgba(252,129,129,0.15)', fg: '#fc8181' };
+}
+function cellMiniColor(p) {
+  if (p >= 3) return { bg: 'rgba(79,209,197,0.3)', fg: '#4fd1c5' };
+  if (p >= 2) return { bg: 'rgba(104,211,145,0.25)', fg: '#68d391' };
+  if (p >= 1) return { bg: 'rgba(246,173,85,0.2)', fg: '#f6ad55' };
+  return { bg: 'rgba(160,174,192,0.1)', fg: '#4a5568' };
+}
+function badgeClass(c) {
+  if (c === 'FUNDAMENTAL') return 'badge-fund';
+  if (c === 'IMPORTANTE') return 'badge-imp';
+  if (c === 'COMPLEMENTARIA') return 'badge-comp';
+  return 'badge-ref';
+}
+
+// ── META ROW ──
+function renderMeta() {
+  const vd = validData();
+  const countries = [...new Set(vd.map(d => d.pais).filter(Boolean))];
+  document.getElementById('metaRow').innerHTML = `
+    <div class="meta-pill"><span>Artículos:</span> <strong>${DATA.length}</strong></div>
+    <div class="meta-pill"><span>Con datos:</span> <strong>${vd.length}</strong></div>
+    <div class="meta-pill"><span>Países:</span> <strong>${countries.length}</strong></div>
+    <div class="meta-pill"><span>Marco:</span> <strong>PCF 9 celdas</strong></div>
+    <div class="meta-pill"><span>Caso:</span> <strong>Rionegro, Antioquia</strong></div>
+  `;
+}
+
+// ── STATS ROW ──
+function renderStats() {
+  const vd = validData();
+  const fund = vd.filter(d => d.clasificacion === 'FUNDAMENTAL').length;
+  const withInd = vd.filter(d => d.n_indicadores > 0).length;
+  const avgScore = avg(vd.map(d => d.suma_puntajes));
+  const highComp = vd.filter(d => d.comparabilidad_rionegro === 'Alta').length;
+
+  const stats = [
+    { num: fund, label: 'Fundamentales', color: 'var(--fund)' },
+    { num: avgScore.toFixed(1), label: 'Puntaje promedio /27', color: 'var(--accent)' },
+    { num: withInd, label: 'Con indicadores', color: 'var(--green)' },
+    { num: highComp, label: 'Alta comparabilidad', color: 'var(--accent2)' },
+  ];
+  document.getElementById('statsRow').innerHTML = stats.map(s => `
+    <div class="card stat-card">
+      <div class="stat-num" style="color:${s.color}">${s.num}</div>
+      <div class="stat-label">${s.label}</div>
+    </div>
+  `).join('');
+}
+
+// ── HEATMAP ──
+function renderHeatmap() {
+  const vd = validData();
+  let html = '<div class="heatmap-header"></div>';
+  NIVELES.forEach(n => { html += `<div class="heatmap-header">${n}</div>`; });
+
+  const counts = {};
+  const avgs = {};
+  CELDAS.forEach(c => {
+    counts[c] = vd.filter(d => d[c] >= 1).length;
+    avgs[c] = avg(vd.map(d => d[c]));
+  });
+  const maxCount = Math.max(...Object.values(counts));
+
+  CELDA_MAP.forEach((row, i) => {
+    html += `<div class="heatmap-row-label">${COMPS[i]}</div>`;
+    row.forEach(celda => {
+      const cnt = counts[celda];
+      const av = avgs[celda].toFixed(1);
+      const colors = heatColor(cnt, maxCount);
+      html += `
+        <div class="heatmap-cell" style="background:${colors.bg}" 
+             data-celda="${celda}"
+             onmouseenter="showCellTooltip(event,'${celda}',${cnt},${av})"
+             onmouseleave="hideTooltip()">
+          <div class="cell-score" style="color:${colors.fg}">${cnt}</div>
+          <div class="cell-avg" style="color:${colors.fg}">x̄ ${av}</div>
+          <div class="cell-label">${celda}</div>
+        </div>`;
+    });
+  });
+  document.getElementById('heatmap').innerHTML = html;
+}
+
+// ── TOOLTIP ──
+function showCellTooltip(e, celda, count, avgScore) {
+  const vd = validData();
+  const arts = vd.filter(d => d[celda] >= 2).slice(0, 4);
+  const tip = document.getElementById('tooltip');
+  tip.innerHTML = `
+    <h4>${CELDA_LABELS[celda]}</h4>
+    <div style="color:var(--text-dim);margin-bottom:0.3rem">${count} artículos · promedio ${avgScore}</div>
+    ${arts.length ? '<div style="border-top:1px solid var(--border);padding-top:0.3rem;margin-top:0.3rem">' +
+      arts.map(a => `<div style="margin:2px 0;font-size:0.68rem;color:var(--text-dim)">· ${a.titulo.substring(0,55)}… <span style="color:var(--accent)">[${a[celda]}]</span></div>`).join('') + '</div>' : ''}
+  `;
+  tip.style.left = (e.clientX + 12) + 'px';
+  tip.style.top = (e.clientY + 12) + 'px';
+  tip.classList.add('visible');
+}
+function hideTooltip() { document.getElementById('tooltip').classList.remove('visible'); }
+
+// ── RADAR ──
+function renderRadar() {
+  const vd = validData();
+  const datasets = NIVELES.map((nivel, ni) => {
+    const data = COMPS.map((_, ci) => {
+      const celda = CELDA_MAP[ci][ni];
+      return +avg(vd.map(d => d[celda])).toFixed(2);
+    });
+    const colors = ['rgba(79,209,197,','rgba(246,173,85,','rgba(99,179,237,'];
+    return {
+      label: nivel,
+      data: data,
+      backgroundColor: colors[ni] + '0.1)',
+      borderColor: colors[ni] + '0.8)',
+      borderWidth: 2,
+      pointRadius: 4,
+      pointBackgroundColor: colors[ni] + '1)',
+    };
+  });
+  new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: { labels: COMPS, datasets },
+    options: {
+      responsive: true,
+      scales: {
+        r: {
+          beginAtZero: true, max: 3,
+          ticks: { stepSize: 1, color: '#8891a0', backdropColor: 'transparent', font: { size: 10 } },
+          grid: { color: 'rgba(42,48,64,0.6)' },
+          pointLabels: { color: '#e2e6ed', font: { size: 12, weight: 500 } },
+          angleLines: { color: 'rgba(42,48,64,0.6)' },
+        }
+      },
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#e2e6ed', padding: 12, font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+// ── CLASSIFICATION BARS ──
+function renderClassification() {
+  const vd = validData();
+  const classes = [
+    { name: 'FUNDAMENTAL', color: 'var(--fund)' },
+    { name: 'IMPORTANTE', color: 'var(--imp)' },
+    { name: 'COMPLEMENTARIA', color: 'var(--comp)' },
+    { name: 'REFERENCIA', color: 'var(--ref)' },
+  ];
+  const total = vd.length || 1;
+  document.getElementById('classificationBars').innerHTML = classes.map(c => {
+    const count = vd.filter(d => d.clasificacion === c.name).length;
+    const pct = (count / total * 100).toFixed(0);
+    return `<div class="class-bar">
+      <div class="bar-label" style="color:${c.color}">${c.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${c.color}"><span class="bar-count">${count}</span></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── VEREDICTOS ──
+function renderVerdictos() {
+  const vd = validData();
+  const ps = ['P1','P2','P3','P4'];
+  const vs = ['Soporta','Desafía','Extiende','No aplica'];
+  let html = '<div class="veredicto-grid">';
+  html += '<div class="vg-header"></div>';
+  ps.forEach(p => { html += `<div class="vg-header">${p}</div>`; });
+  vs.forEach(v => {
+    html += `<div class="vg-label">${v}</div>`;
+    ps.forEach(p => {
+      const count = vd.filter(d => d[p + '_veredicto'] === v).length;
+      const color = v === 'Soporta' ? 'var(--green)' : v === 'Desafía' ? 'var(--red)' : v === 'Extiende' ? 'var(--comp)' : 'var(--text-dim)';
+      html += `<div class="vg-cell" style="color:${color}">${count || '·'}</div>`;
+    });
+  });
+  html += '</div>';
+  document.getElementById('verdictGrid').innerHTML = html;
+}
+
+// ── COMPARABILITY CHART ──
+function renderCompChart() {
+  const vd = validData();
+  const labels = ['Alta','Media','Baja'];
+  const counts = labels.map(l => vd.filter(d => d.comparabilidad_rionegro === l).length);
+  const colors = ['rgba(79,209,197,0.7)','rgba(246,173,85,0.7)','rgba(252,129,129,0.7)'];
+  new Chart(document.getElementById('compChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: counts, backgroundColor: colors, borderRadius: 6, barThickness: 50 }] },
+    options: {
+      responsive: true, indexAxis: 'y',
+      scales: {
+        x: { grid: { color: 'rgba(42,48,64,0.4)' }, ticks: { color: '#8891a0' } },
+        y: { grid: { display: false }, ticks: { color: '#e2e6ed', font: { weight: 500 } } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+// ── TABLE ──
+let currentFilter = 'TODOS';
+let currentSearch = '';
+let sortCol = 'suma_puntajes';
+let sortAsc = false;
+
+function renderTable() {
+  let filtered = DATA.filter(d => {
+    if (currentFilter !== 'TODOS' && d.clasificacion !== currentFilter) return false;
+    if (currentSearch && !d.titulo.toLowerCase().includes(currentSearch) && !d.referencia_apa.toLowerCase().includes(currentSearch) && !(d.pais||'').toLowerCase().includes(currentSearch)) return false;
+    return true;
+  });
+  filtered.sort((a, b) => {
+    let va = a[sortCol] || '', vb = b[sortCol] || '';
+    if (typeof va === 'number' || !isNaN(va)) { va = +va || 0; vb = +vb || 0; }
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+  document.getElementById('tableCount').textContent = filtered.length + ' artículos';
+  document.getElementById('tableBody').innerHTML = filtered.map(d => {
+    const miniCells = CELDAS.map(c => {
+      const p = d[c] || 0;
+      const col = cellMiniColor(p);
+      return `<span class="cell-mini" style="background:${col.bg};color:${col.fg}">${p}</span>`;
+    }).join('');
+    return `<tr>
+      <td title="${d.referencia_apa}">${d.titulo}</td>
+      <td>${d.pais || '—'}</td>
+      <td><span class="badge ${badgeClass(d.clasificacion)}">${(d.clasificacion||'—').substring(0,4)}</span></td>
+      <td style="font-family:'JetBrains Mono';text-align:center">${d.suma_puntajes || 0}</td>
+      <td style="white-space:nowrap">${miniCells}</td>
+      <td>${d.comparabilidad_rionegro || '—'}</td>
+      <td style="text-align:center;font-family:'JetBrains Mono'">${d.n_indicadores || 0}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Events
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderTable();
+  });
+});
+document.getElementById('searchInput').addEventListener('input', e => {
+  currentSearch = e.target.value.toLowerCase();
+  renderTable();
+});
+document.querySelectorAll('[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    if (sortCol === th.dataset.sort) sortAsc = !sortAsc;
+    else { sortCol = th.dataset.sort; sortAsc = true; }
+    renderTable();
+  });
+});
+
+// ── INIT ──
+document.getElementById('lastUpdate').textContent = new Date().toLocaleDateString('es-CO');
+renderMeta();
+renderStats();
+renderHeatmap();
+renderRadar();
+renderClassification();
+renderVerdictos();
+renderCompChart();
+renderTable();
+</script>
+</body>
+</html>
